@@ -15,10 +15,10 @@ import os
 
 # Initialize OpenAI API key and MongoDB client
 load_dotenv()  # Load environment variables from .env file
-openai_apikey = os.getenv('openai_apikey')
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 mongo_uri = os.getenv('mongo_uri')
 
-model = ChatOpenAI(api_key=openai_apikey, temperature=0)
+model = ChatOpenAI(api_key=OPENAI_API_KEY, temperature=0)
 client = MongoClient(mongo_uri)
 db = client["forgeAI"]
 collection = db["resume_parser_data"]
@@ -427,4 +427,5 @@ with gr.Blocks(title="Resume Skill and Non-Skill Matrix Application") as iface:
         outputs=save_status
     )
 
-iface.launch()
+# iface.launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 8000)))
+
