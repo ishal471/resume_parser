@@ -8,7 +8,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_community.chat_models import ChatOpenAI
 # from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
-from docx import Document  # For Word file handling
+# from docx import Document  # For Word file handling
 import textract
 from dotenv import load_dotenv
 import os
