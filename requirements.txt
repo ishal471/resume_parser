@@ -1,0 +1,9 @@
+gradio
+openai
+pydantic
+PyPDF2
+pymongo
+langchain
+python-dotenv
+textract
+mammoth
