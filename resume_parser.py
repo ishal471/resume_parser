@@ -5,7 +5,7 @@ import json
 from pymongo import MongoClient
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
-from langchain.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 # from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 from docx import Document  # For Word file handling
