@@ -1,32 +1,32 @@
-import openai
-import gradio as gr
-import PyPDF2
 import json
-from pymongo import MongoClient
-from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.prompts import PromptTemplate
-from langchain_community.chat_models import ChatOpenAI
-# from langchain_openai import ChatOpenAI
-from pydantic import BaseModel, Field
-# from docx import Document  # For Word file handling
-import textract
-from dotenv import load_dotenv
 import os
 
+import gradio as gr
+import openai
+import PyPDF2
+import textract
+from dotenv import load_dotenv
+from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.prompts import PromptTemplate
+from langchain_openai import ChatOpenAI
+from pydantic import BaseModel, Field
+from pymongo import MongoClient
+
 # Initialize OpenAI API key and MongoDB client
-load_dotenv()  # Load environment variables from .env file
+load_dotenv()
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 mongo_uri = os.getenv('mongo_uri')
-
 model = ChatOpenAI(api_key=OPENAI_API_KEY, temperature=0)
 client = MongoClient(mongo_uri)
 db = client["forgeAI"]
 collection = db["resume_parser_data"]
 
+# Pydantic models and helper functions remain the same as in your original code
+# [Previous SkillMatrix, NonSkillMatrix classes and other helper functions remain unchanged]
 # Define Pydantic data models for structured output
 class SkillMatrix(BaseModel):
     technical_skills: list = Field(description="list of technical skills with experience example python: '2 years' ")
-    certifications: list = Field(description="list of certifications, each certification has infor like issued date, expiry date, issued by organization")
+    certifications: list = Field(description="list of certifications, each certification has information like issued date, expiry date, issued by organization")
     years_of_experience: str = Field(description="Total years of experience")
     experience_details: list = Field(description="list of job roles with companies and duration")
     projects: list = Field(description="list of projects with descriptions")
@@ -321,12 +321,29 @@ def generate_non_skill_matrix(extracted_text, model_structure):
     response = chain.invoke({"resume_text": extracted_text})
     return response
 
-# Initial processing for skill and non-skill matrices
 def process_resume(uploaded_file):
+    if uploaded_file is None:
+        return (
+            None,  # skill_matrix_state
+            None,  # non_skill_matrix_state 
+            None,  # matrix_display
+            None,  # modified_matrix_display
+            None,  # save_status_display
+            None,  # resume_upload
+            gr.Markdown("⚠️ Please upload a resume file before processing.", visible=True)  # error_message
+        )
     resume_text = extract_text(uploaded_file)
     skill_matrix = generate_skill_matrix(resume_text, SkillMatrix)
     non_skill_matrix = generate_non_skill_matrix(resume_text, NonSkillMatrix)
-    return skill_matrix, non_skill_matrix, skill_matrix, non_skill_matrix
+    return (
+        skill_matrix, 
+        non_skill_matrix, 
+        skill_matrix, 
+        non_skill_matrix, 
+        gr.update(visible=True), 
+        None,
+        gr.Markdown(visible=False)  # Hide error message when processing is successful
+    )
 
 # Modify matrix function using ChatOpenAI model instead of openai.Completion
 def modify_matrix(skill_matrix, non_skill_matrix, matrix_type, user_input):
@@ -372,60 +389,143 @@ def modify_matrix(skill_matrix, non_skill_matrix, matrix_type, user_input):
     else:
         non_skill_matrix = updated_matrix
     print ("modified skill matrix json :", updated_matrix)
-    return skill_matrix, non_skill_matrix, skill_matrix, non_skill_matrix
+    return skill_matrix, non_skill_matrix, skill_matrix, non_skill_matrix, gr.update(selected="matrices_tab")
 
-# Save matrices to MongoDB
 def save_to_mongo(skill_matrix, non_skill_matrix):
     try:
         document = {"Skill Matrix": skill_matrix, "Non-Skill Matrix": non_skill_matrix}
         document_id = collection.insert_one(document).inserted_id
-        return {"status": "Success", "message": f"Matrices saved to MongoDB with ID: {document_id}"}
+        return {"status": "Success", "message": f"Matrices saved to MongoDB with ID: {document_id}"}, gr.update(visible=True)
     except Exception as e:
-        return {"status": "Error", "message": str(e)}
+        return {"status": "Error", "message": str(e)}, gr.update(visible=True)
 
-# Gradio interface
-with gr.Blocks(title="Resume Skill and Non-Skill Matrix Application") as iface:
-    gr.Markdown("# Resume Skill and Non-Skill Matrix Application")
+def update_matrix_view(matrix_type, skill_matrix, non_skill_matrix):
+    if matrix_type == "Skill Matrix":
+        return skill_matrix
+    else:
+        return non_skill_matrix
 
-    # File upload and matrix generation
-    resume_upload = gr.File(label="Upload Resume (PDF or Word)")
-    submit_button = gr.Button("Generate Matrices")
-    skill_matrix_display = gr.JSON(label="Skill Matrix")
-    non_skill_matrix_display = gr.JSON(label="Non-Skill Matrix")
+def navigate_to_modify_tab():
+    return gr.update(selected="modify_tab")
 
-    # State for matrices
+def navigate_to_mongo_tab():
+    return gr.update(selected="mongo_tab")
+
+# Enhanced Gradio interface with tabs
+with gr.Blocks(title="Resume Parser Dashboard") as iface:
+    gr.Markdown("# Resume Parser Dashboard")
+    
+    # States for storing matrices
     skill_matrix_state = gr.State()
     non_skill_matrix_state = gr.State()
-
-    # Dropdown for matrix modification and modification input
-    matrix_type_dropdown = gr.Dropdown(choices=["Skill Matrix", "Non-Skill Matrix"], label="Select Matrix to Modify")
-    modification_input = gr.Textbox(label="Request Modifications")
-    generate_changes_button = gr.Button("Generate Changes")
-
-    # Button for saving to MongoDB
-    save_button = gr.Button("Save to MongoDB")
-    save_status = gr.JSON(label="Save Status")
-
-    # Generate matrices on upload
+    
+    with gr.Tabs() as tabs:
+        # Tab 1: Resume Upload
+        with gr.Tab("Upload Resume", id="upload_tab"):
+            gr.Markdown("### Upload Your Resume")
+            resume_upload = gr.File(label="Upload Resume (PDF, DOC, DOCX, or TXT)", type="filepath")
+            error_message = gr.Markdown(visible=False)
+            submit_button = gr.Button("Process Resume", variant="primary")
+        
+        # Tab 2: Matrices View
+        with gr.Tab("View Matrices", id="matrices_tab"):
+            gr.Markdown("### View Generated Matrices")
+            matrix_type_view = gr.Dropdown(
+                choices=["Skill Matrix", "Non-Skill Matrix"],
+                label="Select Matrix Type",
+                value="Skill Matrix"
+            )
+            matrix_display = gr.JSON(label="Matrix Content")
+            
+            with gr.Row():
+                modify_nav_button = gr.Button("Need Changes")
+                save_nav_button = gr.Button("Save to MongoDB")
+        
+        # Tab 3: Modify Matrices
+        with gr.Tab("Modify Matrices", id="modify_tab"):
+            gr.Markdown("### Modify Selected Matrix")
+            matrix_type_modify = gr.Dropdown(
+                choices=["Skill Matrix", "Non-Skill Matrix"],
+                label="Select Matrix to Modify"
+            )
+            modification_input = gr.Textbox(
+                label="Request Modifications",
+                placeholder="Describe the changes you want to make..."
+            )
+            with gr.Row():
+                save_nav_button = gr.Button("Save to MongoDB")
+                apply_changes_button = gr.Button("Apply Changes", variant="primary")            
+            modified_matrix_display = gr.JSON(label="Modified Matrix")
+        
+        # Tab 4: MongoDB Status
+        with gr.Tab("Save Status", id="mongo_tab"):
+            gr.Markdown("### MongoDB Save Status")
+            save_status_display = gr.JSON(label="Save Status", visible=False)
+    
+    # Event handlers
     submit_button.click(
         fn=process_resume,
-        inputs=resume_upload,
-        outputs=[skill_matrix_display, non_skill_matrix_display, skill_matrix_state, non_skill_matrix_state]
+        inputs=[resume_upload],
+        outputs=[
+            skill_matrix_state,
+            non_skill_matrix_state,
+            matrix_display,
+            modified_matrix_display,
+            save_status_display,
+            resume_upload,
+            error_message
+        ]
+    ).then(
+        fn=lambda skill_matrix: gr.update(selected="matrices_tab") if skill_matrix is not None else None,  # Only navigate if processing was successful
+        inputs=[skill_matrix_state],
+        outputs=tabs
     )
-
-    # Apply modifications with "Generate Changes"
-    generate_changes_button.click(
-        fn=modify_matrix,
-        inputs=[skill_matrix_state, non_skill_matrix_state, matrix_type_dropdown, modification_input],
-        outputs=[skill_matrix_display, non_skill_matrix_display, skill_matrix_state, non_skill_matrix_state]
+    
+    matrix_type_view.change(
+        fn=update_matrix_view,
+        inputs=[matrix_type_view, skill_matrix_state, non_skill_matrix_state],
+        outputs=matrix_display
     )
-
-    # Save matrices to MongoDB
-    save_button.click(
+    
+    modify_nav_button.click(
+        fn=navigate_to_modify_tab,
+        outputs=tabs
+    )
+    
+    save_nav_button.click(
+        fn=navigate_to_mongo_tab,
+        outputs=tabs
+    ).then(
         fn=save_to_mongo,
         inputs=[skill_matrix_state, non_skill_matrix_state],
-        outputs=save_status
+        outputs=[save_status_display, save_status_display]
     )
-
-# iface.launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 8000)))
-
+    
+    apply_changes_button.click(
+        fn=modify_matrix,
+        inputs=[
+            skill_matrix_state,
+            non_skill_matrix_state,
+            matrix_type_modify,
+            modification_input
+        ],
+        outputs=[
+            matrix_display,
+            modified_matrix_display,
+            skill_matrix_state,
+            non_skill_matrix_state
+            
+        ]
+    )
+    # Add this event handler after your other event handlers
+    matrix_type_modify.change(
+        fn=update_matrix_view,
+        inputs=[matrix_type_modify, skill_matrix_state, non_skill_matrix_state],
+        outputs=modified_matrix_display
+    )
+# Launch the interface
+if __name__ == "__main__":
+    try:
+        iface.launch(server_port=7860,share=True)
+    except RuntimeError:
+        iface.launch()
