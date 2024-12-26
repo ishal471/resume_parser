@@ -16,7 +16,7 @@ from pymongo import MongoClient
 load_dotenv()
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 mongo_uri = os.getenv('mongo_uri')
-model = ChatOpenAI(api_key=OPENAI_API_KEY, temperature=0)
+model = ChatOpenAI(api_key=OPENAI_API_KEY, temperature=0,model='gpt-4o')
 client = MongoClient(mongo_uri)
 db = client["forgeAI"]
 collection = db["resume_parser_data"]
