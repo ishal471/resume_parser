@@ -11,3 +11,4 @@ uvicorn==0.25.0
 fastapi==0.110.3
 langchain-community
 python-docx
+langchain-openai
