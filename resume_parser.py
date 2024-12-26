@@ -6,10 +6,9 @@ import openai
 import PyPDF2
 import textract
 from dotenv import load_dotenv
-#from langchain_community.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
-from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 from pymongo import MongoClient
 
