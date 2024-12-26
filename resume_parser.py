@@ -413,7 +413,7 @@ def navigate_to_mongo_tab():
     return gr.update(selected="mongo_tab")
 
 # Enhanced Gradio interface with tabs
-with gr.Blocks(title="Resume Parser Dashboard") as iface:
+with gr.Blocks(title="Resume Parser ") as iface:
     gr.Markdown("# Resume Parser Dashboard")
     
     # States for storing matrices
