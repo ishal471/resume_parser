@@ -6,9 +6,10 @@ import openai
 import PyPDF2
 import textract
 from dotenv import load_dotenv
+from langchain_community.chat_models import ChatOpenAI
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
-from langchain_openai import ChatOpenAI
+#from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 from pymongo import MongoClient
 
@@ -524,8 +525,8 @@ with gr.Blocks(title="Resume Parser Dashboard") as iface:
         outputs=modified_matrix_display
     )
 # Launch the interface
-if __name__ == "__main__":
+""" if __name__ == "__main__":
     try:
         iface.launch(server_port=7860,share=True)
     except RuntimeError:
-        iface.launch()
+        iface.launch() """
