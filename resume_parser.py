@@ -6,9 +6,10 @@ import openai
 import PyPDF2
 import textract
 from dotenv import load_dotenv
-from langchain_community.chat_models import ChatOpenAI
+#from langchain_community.chat_models import ChatOpenAI
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
+from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 from pymongo import MongoClient
 
@@ -423,7 +424,7 @@ with gr.Blocks(title="Resume Parser ") as iface:
         # Tab 1: Resume Upload
         with gr.Tab("Upload Resume", id="upload_tab"):
             gr.Markdown("### Upload Your Resume")
-            resume_upload = gr.File(label="Upload Resume (PDF, DOC, DOCX, or TXT)", type="filepath")
+            resume_upload = gr.File(label="Upload Resume (PDF, DOC, DOCX, or TXT)", type="file")
             error_message = gr.Markdown(visible=False)
             submit_button = gr.Button("Process Resume", variant="primary")
         
