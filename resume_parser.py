@@ -525,8 +525,8 @@ with gr.Blocks(title="Resume Parser ") as iface:
         outputs=modified_matrix_display
     )
 # Launch the interface
-if __name__ == "__main__":
+""" if __name__ == "__main__":
     try:
         iface.launch(server_port=7861,share=True)
     except RuntimeError:
-        iface.launch() 
+        iface.launch()  """
