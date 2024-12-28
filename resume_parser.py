@@ -424,7 +424,7 @@ with gr.Blocks(title="Resume Parser ") as iface:
         # Tab 1: Resume Upload
         with gr.Tab("Upload Resume", id="upload_tab"):
             gr.Markdown("### Upload Your Resume")
-            resume_upload = gr.File(label="Upload Resume (PDF, DOC, DOCX, or TXT)", type="file")
+            resume_upload = gr.File(label="Upload Resume (PDF, DOC, DOCX, or TXT)", type="filepath")
             error_message = gr.Markdown(visible=False)
             submit_button = gr.Button("Process Resume", variant="primary")
         
@@ -525,8 +525,8 @@ with gr.Blocks(title="Resume Parser ") as iface:
         outputs=modified_matrix_display
     )
 # Launch the interface
-""" if __name__ == "__main__":
+if __name__ == "__main__":
     try:
-        iface.launch(server_port=7860,share=True)
+        iface.launch(server_port=7861,share=True)
     except RuntimeError:
-        iface.launch() """
+        iface.launch() 

@@ -1,15 +1,16 @@
-gradio==3.41.0
+gradio==5.9.1
 openai==1.25.1
 pydantic==2.4.2
 PyPDF2==3.0.1
 pymongo==4.6.3
-langchain==0.1.20
+langchain==0.3.0
 python-dotenv==1.0.0
 textract==1.6.3
 mammoth==1.8.0
 uvicorn==0.25.0
 fastapi==0.110.3
 langchain-openai==0.2.14
+langchain-core>=0.3.27,<0.4.0
 langchain-community
 python-docx
 
